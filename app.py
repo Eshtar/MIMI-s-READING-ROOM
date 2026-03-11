@@ -24,6 +24,17 @@ def get_random_from_dir(directory):
                 return get_base64_file(os.path.join(directory, choice))
     except: pass
     return None
+# 隐藏右下角的 Streamlit 默认图标和菜单
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            .viewerBadge_container__1QSob {display: none !important;}
+            [data-testid="stStatusWidget"] {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # 加载基础资源
 BG_IMG = get_base64_file("my_card.jpg")
