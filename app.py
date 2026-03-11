@@ -7,21 +7,18 @@ import random
 # --- 1. 配置与资源 ---
 st.set_page_config(page_title="Mimi Reading Room", layout="centered")
 
-# 【精准去水印与去控件 CSS】
+# 精准去水印与去控件 CSS
 st.markdown("""
 <style>
-    /* 彻底隐藏顶部和底部所有 Streamlit 官方控件 */
     header, footer, .stDeployButton, #MainMenu { visibility: hidden !important; height: 0px !important; }
-    
-    /* 强力抹除右下角红色纸船图标 (Viewer Badge) */
     [data-testid="stViewerBadge"] { display: none !important; }
     div[class*="viewerBadge"] { display: none !important; }
-    
-    /* 移除手机端可能出现的底部额外空白 */
     .stAppViewMain { padding-bottom: 0px !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# 【优化处：添加缓存装饰器，防止重复读取硬盘和重复编码导致卡顿】
+@st.cache_data
 def get_base64_file(file_path):
     try:
         if os.path.exists(file_path):
@@ -36,11 +33,13 @@ def get_random_from_dir(directory):
             files = [f for f in os.listdir(directory) if not f.startswith('.')]
             if files:
                 choice = random.choice(files)
-                return get_base64_file(os.path.join(directory, choice))
+                # 随机文件的 Base64 转换不需要缓存，因为每次都要随机，但基础资源必须缓存
+                with open(os.path.join(directory, choice), 'rb') as f:
+                    return base64.b64encode(f.read()).decode()
     except: pass
     return None
 
-# 加载基础资源
+# 加载基础资源 (现在这些只会运行一次，极大提升 rerun 速度)
 BG_IMG = get_base64_file("my_card.jpg")
 MIMI_HEAD = get_base64_file("mimi_head.png")
 MIMI_WALK = get_base64_file("mimi_walk.png")
@@ -60,16 +59,14 @@ if 'reward_content' not in st.session_state: st.session_state.reward_content = {
 if 'choice_made' not in st.session_state: st.session_state.choice_made = None
 if 'muted' not in st.session_state: st.session_state.muted = False 
 
-# 【正式时长设定】
-FOCUS_INTERACT_SEC = 900   # 15分钟弹出选择
-FOCUS_TOTAL_SEC = 1800     # 30分钟完成周期
+FOCUS_INTERACT_SEC = 900
+FOCUS_TOTAL_SEC = 1800
 
-# --- 3. CSS 样式 (保持原有视觉效果) ---
+# --- 3. CSS 样式 ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&family=ZCOOL+KuaiLe&display=swap');
     .stApp {{ background-color: transparent !important; }}
-    
     .mountain-breath {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -999;
         background-image: url("data:image/jpeg;base64,{BG_IMG}") !important;
@@ -77,10 +74,7 @@ st.markdown(f"""
         animation: mountain-haze 8s ease-in-out infinite;
     }}
     @keyframes mountain-haze {{ 0%, 100% {{ filter: brightness(0.2) blur(8px); }} 50% {{ filter: brightness(0.28) blur(6px); }} }}
-
     .mimi-slogan {{ color: #9cad9c; font-family: 'Noto Serif SC', serif; font-size: 1.85rem; letter-spacing: 0.2em; margin: 25px 0; text-align: center; }}
-
-    /* 按钮样式：维持原有风格 */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.03) !important; 
         color: #9cad9c !important; 
@@ -90,7 +84,6 @@ st.markdown(f"""
         box-shadow: none !important; outline: none !important;
     }}
     div.stButton > button:hover {{ border-color: #436b43 !important; color: #c2a64d !important; }}
-
     .grass-track {{
         width: 100%; height: 26px; background: rgba(15, 20, 15, 0.7);
         border-radius: 20px; position: relative; margin: 110px 0 50px 0;
@@ -109,12 +102,10 @@ if st.session_state.ambient_on and not st.session_state.muted and st.session_sta
 if st.session_state.ambient_on:
     elapsed = int(time.time() - st.session_state.start_time)
     remaining = max(0, FOCUS_TOTAL_SEC - elapsed)
-    
     if elapsed >= FOCUS_INTERACT_SEC and not st.session_state.v_trigger_test:
         st.session_state.show_mode = 'choice'
         st.session_state.v_trigger_test = True
         st.rerun()
-
     if remaining <= 0:
         st.session_state.ambient_on = False
         st.session_state.cycle_count += 1
@@ -124,8 +115,6 @@ if st.session_state.ambient_on:
         st.rerun()
 
 # --- 6. 渲染层 ---
-
-# [ A-E 渲染逻辑维持原样 ]
 if st.session_state.show_mode == 'choice':
     st.markdown('<p class="mimi-slogan">咪在看你，你也要看咪吗？</p>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -200,7 +189,6 @@ elif st.session_state.ambient_on and st.session_state.show_mode == 'timing':
         st.rerun()
     time.sleep(1)
     st.rerun()
-
 else:
     st.markdown(f'<div style="text-align: center; padding-top: 40px;"><img src="data:image/png;base64,{MIMI_HEAD}" style="width:52px; opacity:0.65;"><p class="mimi-slogan">MIMI IS WATCHING YOU</p></div>', unsafe_allow_html=True)
     if st.button("和咪一起读", use_container_width=True):
