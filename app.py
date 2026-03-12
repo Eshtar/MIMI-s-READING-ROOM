@@ -23,7 +23,6 @@ def get_files(directory, exts):
     if not os.path.exists(directory): return []
     return [os.path.join(directory, f) for f in os.listdir(directory) if f.split('.')[-1].lower() in exts]
 
-# 加载核心素材
 bg_base64 = get_base64("assets/my_card.jpg")
 head_base64 = get_base64("assets/mimi_head.png")
 walk_base64 = get_base64("assets/mimi_walk.png")
@@ -35,7 +34,7 @@ if st.query_params.get("finish") == "true":
     st.query_params.clear() 
     st.rerun()
 
-# --- 4. CSS 样式 (完全恢复大气风格，增加气泡样式) ---
+# --- 4. CSS 样式 ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
@@ -49,55 +48,57 @@ st.markdown(f"""
     }}
     .block-container {{
         max-width: 1000px !important; margin: 0 auto !important;
-        padding-top: 20px !important;
+        padding-top: 10px !important;
         display: flex !important; flex-direction: column !important; align-items: center !important;
     }}
-    /* 白色 Banner */
+    /* 顶部的 Mimi Banner */
     .mimi-banner {{
         background: #fff; color: #1b4332; width: 92%; max-width: 820px;
-        padding: 20px 0; border-radius: 60px;
-        font-family: 'ZCOOL KuaiLe', cursive; font-size: clamp(24px, 5vw, 48px);
-        font-weight: 900; text-align: center; margin: -20px auto 10px auto;
+        padding: 15px 0; border-radius: 60px;
+        font-family: 'ZCOOL KuaiLe', cursive; font-size: clamp(20px, 4.5vw, 40px);
+        font-weight: 900; text-align: center; margin: 5px auto 10px auto;
         letter-spacing: 4px; border: 1px solid #eee;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         z-index: 10; position: relative;
     }}
-    /* 咪咪气泡文案样式 */
+    /* 精致的对话气泡 */
     .speech-bubble {{
         position: relative; background: #ffffff; border: 3px solid #1b4332;
-        border-radius: 20px; padding: 10px 20px; margin: 5px 0 20px 0;
-        font-family: 'ZCOOL KuaiLe'; font-size: 20px; color: #1b4332;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        border-radius: 15px; padding: 8px 15px; margin: 10px 0 20px 0;
+        font-family: 'ZCOOL KuaiLe'; font-size: 18px; color: #1b4332;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block;
     }}
+    /* 气泡指向头像的小三角 */
     .speech-bubble:after {{
-        content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-        border-width: 0 15px 15px; border-style: solid; border-color: #1b4332 transparent;
-        display: block; width: 0;
+        content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+        border-width: 10px; border-style: solid; border-color: transparent transparent #1b4332 transparent;
     }}
+
     div.stButton > button {{
         background-color: #1b4332 !important; color: white !important;
         border-radius: 40px !important; font-family: 'ZCOOL KuaiLe' !important;
-        font-weight: 800 !important; font-size: 22px !important;
-        width: 100% !important; height: 65px !important;
+        font-weight: 800 !important; font-size: 20px !important;
+        width: 100% !important; height: 60px !important;
         border: 2px solid white !important;
     }}
 </style>
 """, unsafe_allow_html=True)
 
-# 顶部渲染
-st.markdown(f'<div style="text-align:center; z-index:20; position:relative;"><img src="data:image/png;base64,{head_base64}" style="width:150px; height:150px; border-radius:50%; border:6px solid white; object-fit: cover;"></div>', unsafe_allow_html=True)
+# 1. 顶部 Banner
 st.markdown('<div class="mimi-banner">MIMI IS WATCHING YOU</div>', unsafe_allow_html=True)
 
-# 随机气泡文案显示
+# 2. 咪咪大头像
+st.markdown(f'<div style="text-align:center; margin-top:10px;"><img src="data:image/png;base64,{head_base64}" style="width:120px; height:120px; border-radius:50%; border:5px solid white; object-fit: cover;"></div>', unsafe_allow_html=True)
+
+# 3. 动态对话气泡
 if st.session_state.page != "landing":
     bubbles = ["咪在睡觉 💤", "咪在看你 👀", "咪饿了 🦴", "专注！咪命令你", "再等一会就有惊喜 ✨"]
-    selected_bubble = random.choice(bubbles)
-    st.markdown(f'<div class="speech-bubble">{selected_bubble}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:center;"><div class="speech-bubble">{random.choice(bubbles)}</div></div>', unsafe_allow_html=True)
 
 # --- 5. 页面路由 ---
 
 if st.session_state.page == "landing":
-    st.markdown('<div style="height: 30px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     with col2:
         if st.button("咪来了", use_container_width=True): 
@@ -113,7 +114,7 @@ elif st.session_state.page == "timer":
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
         body {{ font-family: 'ZCOOL KuaiLe', sans-serif; margin: 0; background: transparent; overflow: hidden; }}
-        .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 20px; width: 90%; max-width: 800px; margin: 10px auto; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }}
+        .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 20px; width: 90%; max-width: 800px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }}
         .bar-bg {{ width: 100%; height: 75px; background: #f1f8e9; border-radius: 50px; position: relative; border-bottom: 6px solid #6a994e; display: flex; align-items: center; overflow: visible; }}
         .decorations {{ position: absolute; width: 85%; left: 5%; display: flex; justify-content: space-between; font-size: 18px; bottom: 8px; opacity: 0.6; }}
         .walker {{ position: absolute; bottom: 8px; left: 0%; transition: left 1s linear; z-index: 90; }}
@@ -161,10 +162,9 @@ elif st.session_state.page == "timer":
             if (audio.muted) {{ audio.muted = false; audio.play(); document.getElementById('duck-btn').innerText = "🦆"; }}
             else {{ audio.muted = true; audio.pause(); document.getElementById('duck-btn').innerText = "🔇"; }}
         }}
-
         function triggerFinish() {{ window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + "?finish=true"; }}
 
-        var total = 1800; // 正式 30分钟
+        var total = 1800; 
         var isPaused = false;
 
         function watchMimi() {{ 
@@ -187,12 +187,11 @@ elif st.session_state.page == "timer":
             document.getElementById('timer-val').innerText = (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
             document.getElementById('walker').style.left = ((1800 - total) / 1800 * 84) + "%";
             
-            if (total == 900) {{ // 15分钟突击检查
+            if (total == 900) {{ 
                 isPaused = true; 
                 document.getElementById('main-view').style.display = 'none'; 
                 document.getElementById('interact-view').style.display = 'flex'; 
             }}
-
             if (total <= 0) {{
                 clearInterval(clock);
                 document.getElementById('main-view').style.display = 'none';
@@ -202,15 +201,14 @@ elif st.session_state.page == "timer":
             }}
         }}, 1000);
     </script>
-    """, height=650)
+    """, height=600)
 
 elif st.session_state.page == "reward":
     st.balloons()
     st.markdown("<div style='background:#fff; padding:30px; border-radius:35px; border:1px solid #eee; text-align:center; width: 92%; max-width: 850px; margin: 0 auto; box-shadow: 0 12px 45px rgba(0,0,0,0.08);'>", unsafe_allow_html=True)
-    st.markdown(f"<h1 style='font-family:ZCOOL KuaiLe; color:#FFD700; font-size:38px; -webkit-text-stroke:1.2px #1b4332;'>🎊 读书完成！</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='font-family:ZCOOL KuaiLe; color:#FFD700; font-size:35px; -webkit-text-stroke:1px #1b4332;'>🎊 读书完成！</h1>", unsafe_allow_html=True)
     
     cur_round = st.session_state.round_count
-    # 奖励配置：第一轮(1,1,1), 第二轮(2,3,2), 第三轮+(3,4,3)
     if cur_round == 1: n_p, n_v, n_m = 1, 1, 1
     elif cur_round == 2: n_p, n_v, n_m = 2, 3, 2
     else: n_p, n_v, n_m = 3, 4, 3
@@ -219,23 +217,20 @@ elif st.session_state.page == "reward":
     v_pool = get_files("videos", ['mp4', 'mov'])
     m_pool = get_files("music", ['mp3', 'wav'])
 
-    # 抽取奖励
     selected_p = random.sample(p_pool, min(n_p, len(p_pool)))
     selected_v = random.sample(v_pool, min(n_v, len(v_pool)))
     selected_m = random.sample(m_pool, min(n_m, len(m_pool)))
 
-    st.markdown(f"#### 第 {cur_round} 轮：这是咪给你的专属奖励")
+    st.markdown(f"#### 第 {cur_round} 轮：咪奖励给勤奋的你")
     
-    # 按照照片、视频、音频顺序排列显示
     for p in selected_p: st.image(p, use_column_width=True)
-    
     c_v, c_m = st.columns(2)
     with c_v:
         for v in selected_v: st.video(v)
     with c_m:
         for m in selected_m: st.audio(m)
         
-    st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
     if st.button("人还能学", use_container_width=True):
         st.session_state.round_count += 1
         st.session_state.page = "timer"
