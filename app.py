@@ -3,13 +3,10 @@ import base64
 import os
 import random
 
-# --- 1. 页面配置与初始化 ---
+# --- 1. 页面配置 ---
 st.set_page_config(page_title="MIMI Reading Room", layout="wide", initial_sidebar_state="collapsed")
 
-if "page" not in st.session_state: st.session_state.page = "landing"
-if "round_count" not in st.session_state: st.session_state.round_count = 1
-
-# --- 2. 资源加载函数 ---
+# --- 2. 资源加载 ---
 @st.cache_data
 def get_base64(path):
     try:
@@ -19,7 +16,7 @@ def get_base64(path):
     except: pass
     return ""
 
-def get_files(directory, exts):
+def get_files_from_dir(directory, exts):
     if not os.path.exists(directory): return []
     return [os.path.join(directory, f) for f in os.listdir(directory) if f.split('.')[-1].lower() in exts]
 
@@ -28,13 +25,13 @@ head_base64 = get_base64("assets/mimi_head.png")
 walk_base64 = get_base64("assets/mimi_walk.png")
 bgm_base64 = get_base64("assets/bg_music.mp3")
 
-# --- 3. 手机端跳转监听 ---
-if st.query_params.get("finish") == "true":
-    st.session_state.page = "reward"
-    st.query_params.clear() 
-    st.rerun()
+photos_list = get_files_from_dir("photos", ['jpg', 'png', 'jpeg'])
+music_list = get_files_from_dir("music", ['mp3', 'wav'])
+videos_list = get_files_from_dir("videos", ['mp4', 'mov'])
 
-# --- 4. CSS 样式 ---
+if "page" not in st.session_state: st.session_state.page = "landing"
+
+# --- 3. CSS 样式 ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
@@ -48,191 +45,178 @@ st.markdown(f"""
     }}
     .block-container {{
         max-width: 1000px !important; margin: 0 auto !important;
-        padding-top: 10px !important;
+        padding-top: clamp(1rem, 4vh, 3rem) !important;
         display: flex !important; flex-direction: column !important; align-items: center !important;
     }}
-    /* 顶部的 Mimi Banner */
     .mimi-banner {{
         background: #fff; color: #1b4332; width: 92%; max-width: 820px;
-        padding: 15px 0; border-radius: 60px;
-        font-family: 'ZCOOL KuaiLe', cursive; font-size: clamp(20px, 4.5vw, 40px);
-        font-weight: 900; text-align: center; margin: 5px auto 10px auto;
+        padding: 20px 0; border-radius: 60px;
+        font-family: 'ZCOOL KuaiLe', cursive; font-size: clamp(24px, 5vw, 48px);
+        font-weight: 900; text-align: center; margin: -20px auto 20px auto;
         letter-spacing: 4px; border: 1px solid #eee;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         z-index: 10; position: relative;
     }}
-    /* 精致的对话气泡 */
-    .speech-bubble {{
-        position: relative; background: #ffffff; border: 3px solid #1b4332;
-        border-radius: 15px; padding: 8px 15px; margin: 10px 0 20px 0;
-        font-family: 'ZCOOL KuaiLe'; font-size: 18px; color: #1b4332;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block;
-    }}
-    /* 气泡指向头像的小三角 */
-    .speech-bubble:after {{
-        content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-        border-width: 10px; border-style: solid; border-color: transparent transparent #1b4332 transparent;
-    }}
-
     div.stButton > button {{
         background-color: #1b4332 !important; color: white !important;
         border-radius: 40px !important; font-family: 'ZCOOL KuaiLe' !important;
-        font-weight: 800 !important; font-size: 20px !important;
-        width: 100% !important; height: 60px !important;
+        font-weight: 800 !important; font-size: 22px !important;
+        width: 100% !important; height: 65px !important;
         border: 2px solid white !important;
     }}
 </style>
 """, unsafe_allow_html=True)
 
-# 1. 顶部 Banner
+with st.sidebar:
+    if st.button("FINISH_ROUND"): st.session_state.page = "reward"; st.rerun()
+
+st.markdown(f'<div style="text-align:center; z-index:20; position:relative;"><img src="data:image/png;base64,{head_base64}" style="width:150px; height:150px; border-radius:50%; border:6px solid white; object-fit: cover;"></div>', unsafe_allow_html=True)
 st.markdown('<div class="mimi-banner">MIMI IS WATCHING YOU</div>', unsafe_allow_html=True)
 
-# 2. 咪咪大头像
-st.markdown(f'<div style="text-align:center; margin-top:10px;"><img src="data:image/png;base64,{head_base64}" style="width:120px; height:120px; border-radius:50%; border:5px solid white; object-fit: cover;"></div>', unsafe_allow_html=True)
-
-# 3. 动态对话气泡
-if st.session_state.page != "landing":
-    bubbles = ["咪在睡觉 💤", "咪在看你 👀", "咪饿了 🦴", "专注！咪命令你", "再等一会就有惊喜 ✨"]
-    st.markdown(f'<div style="text-align:center;"><div class="speech-bubble">{random.choice(bubbles)}</div></div>', unsafe_allow_html=True)
-
-# --- 5. 页面路由 ---
-
+# --- 4. 页面路由 ---
 if st.session_state.page == "landing":
-    st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     with col2:
         if st.button("咪来了", use_container_width=True): 
             st.session_state.page = "timer"; st.rerun()
     with col3:
-        if st.button("咪走了", use_container_width=True): st.stop()
+        if st.button("咪走了", use_container_width=True): 
+            st.stop()
 
 elif st.session_state.page == "timer":
-    v_list = get_files("videos", ['mp4', 'mov'])
-    video_uri = f"data:video/mp4;base64,{get_base64(random.choice(v_list))}" if v_list else ""
+    selected_video = random.choice(videos_list) if videos_list else None
+    video_uri = f"data:video/mp4;base64,{get_base64(selected_video)}" if selected_video else ""
 
+    # 关键修改点：去掉了死板的 min-height，改为动态区块切换
     st.components.v1.html(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
         body {{ font-family: 'ZCOOL KuaiLe', sans-serif; margin: 0; background: transparent; overflow: hidden; }}
-        .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 20px; width: 90%; max-width: 800px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }}
-        .bar-bg {{ width: 100%; height: 75px; background: #f1f8e9; border-radius: 50px; position: relative; border-bottom: 6px solid #6a994e; display: flex; align-items: center; overflow: visible; }}
-        .decorations {{ position: absolute; width: 85%; left: 5%; display: flex; justify-content: space-between; font-size: 18px; bottom: 8px; opacity: 0.6; }}
+        /* 去掉了 min-height: 400px，让容器随内容自由伸缩 */
+        .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 25px; width: 92%; max-width: 850px; margin: 20px auto; position: relative; box-shadow: 0 12px 45px rgba(0,0,0,0.08); transition: all 0.3s ease; }}
+        .bar-bg {{ width: 100%; height: 80px; background: #f1f8e9; border-radius: 50px; position: relative; border-bottom: 6px solid #6a994e; margin-top: 10px; display: flex; align-items: center; overflow: visible; }}
+        .decorations {{ position: absolute; width: 85%; left: 4%; display: flex; justify-content: space-between; font-size: 20px; bottom: 8px; z-index: 5; opacity: 0.6; }}
         .walker {{ position: absolute; bottom: 8px; left: 0%; transition: left 1s linear; z-index: 90; }}
-        .walker img {{ height: 60px; }}
-        .timer-text {{ font-size: 60px; font-weight: 900; color: #1b4332; text-align: right; font-family: 'Courier New', monospace; margin: 10px 10px 5px 0; }}
-        #duck-btn {{ position: absolute; top: 15px; right: 20px; font-size: 28px; background: none; border: none; cursor: pointer; z-index: 100; }}
-        .mimi-btn {{ background: #1b4332; color: white; border: none; padding: 12px 30px; border-radius: 35px; font-family: 'ZCOOL KuaiLe'; font-size: 18px; cursor: pointer; margin: 8px 0; }}
-        #mimi-video {{ width: 100%; height: auto; max-height: 380px; border-radius: 15px; background: #000; object-fit: contain; }}
+        .walker img {{ height: 70px; }}
+        .timer-text {{ font-size: 70px; font-weight: 900; color: #1b4332; text-align: right; font-family: 'Courier New', monospace; margin-top: 10px; margin-bottom: 5px; }}
+        #duck-btn {{ position: absolute; top: 15px; right: 25px; font-size: 30px; background: none; border: none; cursor: pointer; z-index: 100; }}
+        .mimi-btn {{ background: #1b4332; color: white; border: none; padding: 12px 35px; border-radius: 35px; font-family: 'ZCOOL KuaiLe'; font-size: 18px; cursor: pointer; margin: 10px 0; }}
+        #mimi-video {{ width: auto; max-width: 90%; max-height: 400px; border-radius: 15px; background: #000; object-fit: contain; margin-top:10px; }}
+        #auto-msg {{ margin-top: 15px; font-size: 16px; color: #FFD700; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); padding-bottom: 10px; }}
     </style>
 
     <audio id="bgm" autoplay loop><source src="data:audio/mp3;base64,{bgm_base64}" type="audio/mpeg"></audio>
 
     <div class="container">
         <button id="duck-btn" onclick="toggleMute()">🦆</button>
+        
         <div id="main-view">
             <div class="bar-bg">
-                <div class="decorations"><span>🌸</span><span>🌿</span><span>🌼</span><span>🌻</span><span>🌾</span></div>
+                <div class="decorations"><span>🌸</span><span>🌿</span><span>🌼</span><span>🌻</span><span>🌾</span><span>🌺</span></div>
                 <div class="walker" id="walker"><img src="data:image/png;base64,{walk_base64}"></div>
-                <div style="position: absolute; right: 15px; font-size: 35px;">🦴</div>
+                <div style="position: absolute; right: 18px; font-size: 40px;">🦴</div>
             </div>
             <div id="timer-val" class="timer-text">30:00</div>
         </div>
 
-        <div id="interact-view" style="display:none; flex-direction:column; align-items:center;">
-            <div id="check-title" style="color: #FFD700; -webkit-text-stroke: 1.2px #1b4332; font-size: 24px; margin-bottom: 10px; font-weight:900;">🐾 咪咪突击检查！</div>
-            <div id="btn-group" style="display:flex; flex-direction:column; align-items:center;">
+        <div id="interact-view" style="display:none; flex-direction:column; align-items:center; width: 100%; padding-top:10px;">
+            <div id="check-title" style="color: #FFD700; -webkit-text-stroke: 1.5px #1b4332; font-size: 28px; margin-bottom: 15px; font-weight:900;">🐾 咪咪突击检查！</div>
+            
+            <div id="btn-group" style="display:flex; flex-direction:column; align-items:center; gap:10px;">
                 <button class="mimi-btn" onclick="watchMimi()">休息看咪</button>
                 <button class="mimi-btn" onclick="backToRead()">回去读书</button>
             </div>
-            <div id="video-area" style="display:none; width:100%; text-align:center;">
-                <video id="mimi-video" controls playsinline><source src="{video_uri}" type="video/mp4"></video><br>
-                <button class="mimi-btn" onclick="backToRead()" style="margin-top:10px;">← 返回读书</button>
+
+            <div id="video-wrap" style="display:none; width:100%; text-align:center;">
+                <button class="mimi-btn" onclick="backToRead()">← 回去读书</button><br>
+                <video id="mimi-video" controls playsinline><source src="{video_uri}" type="video/mp4"></video>
             </div>
-        </div>
-        
-        <div id="finish-view" style="display:none; text-align:center;">
-            <button class="mimi-btn" style="background:#FFD700; color:#1b4332; font-size:24px; padding:15px 45px;" onclick="triggerFinish()">🎁 领取奖励</button>
+            
+            <div id="auto-msg"></div>
         </div>
     </div>
 
     <script>
         var audio = document.getElementById("bgm"); audio.volume = 0.3;
         var video = document.getElementById("mimi-video");
+        
         function toggleMute() {{ 
             if (audio.muted) {{ audio.muted = false; audio.play(); document.getElementById('duck-btn').innerText = "🦆"; }}
             else {{ audio.muted = true; audio.pause(); document.getElementById('duck-btn').innerText = "🔇"; }}
         }}
-        function triggerFinish() {{ window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + "?finish=true"; }}
 
-        var total = 1800; 
-        var isPaused = false;
+        var total = 1800; var isPaused = false; var autoInterval;
 
         function watchMimi() {{ 
+            clearInterval(autoInterval); 
+            document.getElementById('auto-msg').innerText = "";
             document.getElementById('check-title').style.display='none';
             document.getElementById('btn-group').style.display='none'; 
-            document.getElementById('video-area').style.display='block'; 
+            document.getElementById('video-wrap').style.display='block'; 
             video.play(); 
         }}
 
         function backToRead() {{ 
-            isPaused = false; video.pause();
+            clearInterval(autoInterval); isPaused = false; video.pause();
             document.getElementById('interact-view').style.display='none'; 
-            document.getElementById('main-view').style.display='block'; 
+            document.getElementById('check-title').style.display='block';
+            document.getElementById('btn-group').style.display='flex'; 
+            document.getElementById('video-wrap').style.display='none'; 
+            document.getElementById('main-view').style.display='block'; // 恢复显示进度条
         }}
 
-        var clock = setInterval(function() {{
+        video.onended = function() {{ backToRead(); }};
+
+        setInterval(function() {{
             if (isPaused) return;
             total--;
-            var m = Math.floor(total / 60); var s = total % 60;
-            document.getElementById('timer-val').innerText = (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
-            document.getElementById('walker').style.left = ((1800 - total) / 1800 * 84) + "%";
+            var m = Math.floor(total/60); var s = total%60;
+            document.getElementById('timer-val').innerHTML = (m<10?"0"+m:m)+":"+(s<10?"0"+s:s);
+            document.getElementById('walker').style.left = ((1800-total)/1800*84) + "%";
             
             if (total == 900) {{ 
                 isPaused = true; 
-                document.getElementById('main-view').style.display = 'none'; 
-                document.getElementById('interact-view').style.display = 'flex'; 
+                document.getElementById('main-view').style.display = 'none'; // 隐藏进度条
+                document.getElementById('interact-view').style.display = 'flex'; // 显示检查界面
+                var rem = 15;
+                autoInterval = setInterval(function() {{
+                    rem--; 
+                    document.getElementById('auto-msg').innerText = rem + "秒无动作将默认回去读书...";
+                    if(rem <= 0) backToRead();
+                }}, 1000);
             }}
-            if (total <= 0) {{
-                clearInterval(clock);
-                document.getElementById('main-view').style.display = 'none';
-                document.getElementById('interact-view').style.display = 'none';
-                document.getElementById('finish-view').style.display = 'block';
-                triggerFinish();
-            }}
+            if (total <= 0) {{ window.parent.document.querySelectorAll('button').forEach(btn => {{ if(btn.innerText.includes("FINISH_ROUND")) btn.click(); }}); }}
         }}, 1000);
     </script>
     """, height=600)
 
 elif st.session_state.page == "reward":
     st.balloons()
-    st.markdown("<div style='background:#fff; padding:30px; border-radius:35px; border:1px solid #eee; text-align:center; width: 92%; max-width: 850px; margin: 0 auto; box-shadow: 0 12px 45px rgba(0,0,0,0.08);'>", unsafe_allow_html=True)
-    st.markdown(f"<h1 style='font-family:ZCOOL KuaiLe; color:#FFD700; font-size:35px; -webkit-text-stroke:1px #1b4332;'>🎊 读书完成！</h1>", unsafe_allow_html=True)
+    st.markdown("<div style='background:#fff; padding:30px; border-radius:35px; border:1px solid #eee; text-align:center; width: 92%; max-width: 850px; margin: 10px auto; box-shadow: 0 12px 45px rgba(0,0,0,0.08);'>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='font-family:ZCOOL KuaiLe; color:#FFD700; font-size:40px; -webkit-text-stroke:1.5px #1b4332;'>🎊 读书完成！</h1>", unsafe_allow_html=True)
     
-    cur_round = st.session_state.round_count
-    if cur_round == 1: n_p, n_v, n_m = 1, 1, 1
-    elif cur_round == 2: n_p, n_v, n_m = 2, 3, 2
-    else: n_p, n_v, n_m = 3, 4, 3
-
-    p_pool = get_files("photos", ['jpg', 'png', 'jpeg'])
-    v_pool = get_files("videos", ['mp4', 'mov'])
-    m_pool = get_files("music", ['mp3', 'wav'])
-
-    selected_p = random.sample(p_pool, min(n_p, len(p_pool)))
-    selected_v = random.sample(v_pool, min(n_v, len(v_pool)))
-    selected_m = random.sample(m_pool, min(n_m, len(m_pool)))
-
-    st.markdown(f"#### 第 {cur_round} 轮：咪奖励给勤奋的你")
-    
-    for p in selected_p: st.image(p, use_column_width=True)
-    c_v, c_m = st.columns(2)
-    with c_v:
-        for v in selected_v: st.video(v)
-    with c_m:
-        for m in selected_m: st.audio(m)
-        
-    st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-    if st.button("人还能学", use_container_width=True):
-        st.session_state.round_count += 1
-        st.session_state.page = "timer"
-        st.rerun()
+    col1, col2 = st.columns(2)
+    with col1:
+        if photos_list:
+            try: 
+                # 这里手动指定了宽度为 350 像素，解决了之前的报错问题
+                st.image(random.choice(photos_list), width=350)
+            except: 
+                pass
+    with col2:
+        if music_list:
+            try: 
+                st.audio(random.choice(music_list))
+            except: 
+                pass
+        if videos_list:
+            try: 
+                # 视频也统一指定了宽度，让排版更整齐
+                st.video(random.choice(videos_list), width=350)
+            except: 
+                pass
+                
+    if st.button("再读一轮", use_container_width=True):
+        st.session_state.page = "timer"; st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
