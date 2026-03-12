@@ -92,30 +92,33 @@ elif st.session_state.page == "timer":
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
         body {{ font-family: 'ZCOOL KuaiLe', sans-serif; margin: 0; background: transparent; overflow: hidden; }}
-        .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 25px; width: 92%; max-width: 850px; margin: 20px auto; position: relative; box-shadow: 0 12px 45px rgba(0,0,0,0.08); min-height: 400px; }}
-        .bar-bg {{ width: 100%; height: 80px; background: #f1f8e9; border-radius: 50px; position: relative; border-bottom: 6px solid #6a994e; margin-top: 20px; display: flex; align-items: center; }}
+        .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 25px; width: 92%; max-width: 850px; margin: 20px auto; position: relative; box-shadow: 0 12px 45px rgba(0,0,0,0.08); transition: all 0.3s ease; }}
+        .bar-bg {{ width: 100%; height: 80px; background: #f1f8e9; border-radius: 50px; position: relative; border-bottom: 6px solid #6a994e; margin-top: 10px; display: flex; align-items: center; overflow: visible; }}
+        .decorations {{ position: absolute; width: 85%; left: 4%; display: flex; justify-content: space-between; font-size: 20px; bottom: 8px; z-index: 5; opacity: 0.6; }}
         .walker {{ position: absolute; bottom: 8px; left: 0%; transition: left 1s linear; z-index: 90; }}
         .walker img {{ height: 70px; }}
-        /* 关键修复：增加纵向滚动，防止内容遮挡 */
-        #interact-overlay {{ 
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #fff; border-radius: 32px; z-index: 5000; 
-            flex-direction: column; align-items: center; justify-content: flex-start; 
-            padding-top: 40px; overflow-y: auto; 
-        }}
-        .timer-text {{ font-size: 70px; font-weight: 900; color: #1b4332; text-align: right; font-family: 'Courier New', monospace; margin-top: 10px; }}
+        .timer-text {{ font-size: 70px; font-weight: 900; color: #1b4332; text-align: right; font-family: 'Courier New', monospace; margin-top: 10px; margin-bottom: 5px; }}
         #duck-btn {{ position: absolute; top: 15px; right: 25px; font-size: 30px; background: none; border: none; cursor: pointer; z-index: 100; }}
-        .mimi-btn {{ background: #1b4332; color: white; border: none; padding: 12px 35px; border-radius: 35px; font-family: 'ZCOOL+KuaiLe'; font-size: 18px; cursor: pointer; margin: 10px 0; }}
-        /* 视频自适应高度修复 */
-        #mimi-video {{ max-width: 85%; max-height: 60vh; border-radius: 15px; background: #000; }}
-        #auto-msg {{ margin-top: 15px; font-size: 16px; color: #FFD700; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); padding-bottom: 20px; }}
+        .mimi-btn {{ background: #1b4332; color: white; border: none; padding: 12px 35px; border-radius: 35px; font-family: 'ZCOOL KuaiLe'; font-size: 18px; cursor: pointer; margin: 10px 0; }}
+        #mimi-video {{ width: auto; max-width: 90%; max-height: 400px; border-radius: 15px; background: #000; object-fit: contain; margin-top:10px; }}
+        #auto-msg {{ margin-top: 15px; font-size: 16px; color: #FFD700; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); padding-bottom: 10px; }}
     </style>
 
     <audio id="bgm" autoplay loop><source src="data:audio/mp3;base64,{bgm_base64}" type="audio/mpeg"></audio>
 
     <div class="container">
         <button id="duck-btn" onclick="toggleMute()">🦆</button>
-        <div id="interact-overlay">
+        
+        <div id="main-view">
+            <div class="bar-bg">
+                <div class="decorations"><span>🌸</span><span>🌿</span><span>🌼</span><span>🌻</span><span>🌾</span><span>🌺</span></div>
+                <div class="walker" id="walker"><img src="data:image/png;base64,{walk_base64}"></div>
+                <div style="position: absolute; right: 18px; font-size: 40px;">🦴</div>
+            </div>
+            <div id="timer-val" class="timer-text">01:00</div>
+        </div>
+
+        <div id="interact-view" style="display:none; flex-direction:column; align-items:center; width: 100%; padding-top:10px;">
             <div id="check-title" style="color: #FFD700; -webkit-text-stroke: 1.5px #1b4332; font-size: 28px; margin-bottom: 15px; font-weight:900;">🐾 咪咪突击检查！</div>
             
             <div id="btn-group" style="display:flex; flex-direction:column; align-items:center; gap:10px;">
@@ -130,12 +133,6 @@ elif st.session_state.page == "timer":
             
             <div id="auto-msg"></div>
         </div>
-
-        <div class="bar-bg">
-            <div class="walker" id="walker"><img src="data:image/png;base64,{walk_base64}"></div>
-            <div style="position: absolute; right: 18px; font-size: 40px;">🦴</div>
-        </div>
-        <div id="timer-val" class="timer-text">30:00</div>
     </div>
 
     <script>
@@ -147,7 +144,10 @@ elif st.session_state.page == "timer":
             else {{ audio.muted = true; audio.pause(); document.getElementById('duck-btn').innerText = "🔇"; }}
         }}
 
-        var total = 1800; var isPaused = false; var autoInterval;
+        // 测试版：总长 60 秒
+        var total = 60; 
+        var isPaused = false; 
+        var autoInterval;
 
         function watchMimi() {{ 
             clearInterval(autoInterval); 
@@ -160,10 +160,11 @@ elif st.session_state.page == "timer":
 
         function backToRead() {{ 
             clearInterval(autoInterval); isPaused = false; video.pause();
-            document.getElementById('interact-overlay').style.display='none'; 
+            document.getElementById('interact-view').style.display='none'; 
             document.getElementById('check-title').style.display='block';
             document.getElementById('btn-group').style.display='flex'; 
             document.getElementById('video-wrap').style.display='none'; 
+            document.getElementById('main-view').style.display='block'; 
         }}
 
         video.onended = function() {{ backToRead(); }};
@@ -173,11 +174,15 @@ elif st.session_state.page == "timer":
             total--;
             var m = Math.floor(total/60); var s = total%60;
             document.getElementById('timer-val').innerHTML = (m<10?"0"+m:m)+":"+(s<10?"0"+s:s);
-            document.getElementById('walker').style.left = ((1800-total)/1800*84) + "%";
             
-            if (total == 900) {{ 
+            // 测试版：按 60 秒计算进度条长度
+            document.getElementById('walker').style.left = ((60-total)/60*84) + "%";
+            
+            // 测试版：30秒时触发突击检查
+            if (total == 30) {{ 
                 isPaused = true; 
-                document.getElementById('interact-overlay').style.display = 'flex'; 
+                document.getElementById('main-view').style.display = 'none'; 
+                document.getElementById('interact-view').style.display = 'flex'; 
                 var rem = 15;
                 autoInterval = setInterval(function() {{
                     rem--; 
@@ -188,7 +193,7 @@ elif st.session_state.page == "timer":
             if (total <= 0) {{ window.parent.document.querySelectorAll('button').forEach(btn => {{ if(btn.innerText.includes("FINISH_ROUND")) btn.click(); }}); }}
         }}, 1000);
     </script>
-    """, height=750)
+    """, height=600)
 
 elif st.session_state.page == "reward":
     st.balloons()
