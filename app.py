@@ -20,14 +20,16 @@ def get_files_from_dir(directory, exts):
     if not os.path.exists(directory): return []
     return [os.path.join(directory, f) for f in os.listdir(directory) if f.split('.')[-1].lower() in exts]
 
+# 加载基础素材（如果这些文件也很大，建议也压缩一下）
 bg_base64 = get_base64("assets/my_card.jpg")
 head_base64 = get_base64("assets/mimi_head.png")
 walk_base64 = get_base64("assets/mimi_walk.png")
-bgm_base64 = get_base64("assets/bg_music.mp3")
+# 注意：如果你连背景音乐也不想要了，可以把下面这行和 HTML 里的 <audio> 标签删掉
+bgm_base64 = get_base64("assets/bg_music.mp3") 
 
 photos_list = get_files_from_dir("photos", ['jpg', 'png', 'jpeg'])
-music_list = get_files_from_dir("music", ['mp3', 'wav'])
 videos_list = get_files_from_dir("videos", ['mp4', 'mov'])
+# 💡 已删掉 music_list 的扫描
 
 if "page" not in st.session_state: st.session_state.page = "landing"
 
@@ -88,12 +90,10 @@ elif st.session_state.page == "timer":
     selected_video = random.choice(videos_list) if videos_list else None
     video_uri = f"data:video/mp4;base64,{get_base64(selected_video)}" if selected_video else ""
 
-    # 关键修改点：去掉了死板的 min-height，改为动态区块切换
     st.components.v1.html(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
         body {{ font-family: 'ZCOOL KuaiLe', sans-serif; margin: 0; background: transparent; overflow: hidden; }}
-        /* 去掉了 min-height: 400px，让容器随内容自由伸缩 */
         .container {{ background: #fff; border-radius: 35px; border: 1px solid #eee; padding: 25px; width: 92%; max-width: 850px; margin: 20px auto; position: relative; box-shadow: 0 12px 45px rgba(0,0,0,0.08); transition: all 0.3s ease; }}
         .bar-bg {{ width: 100%; height: 80px; background: #f1f8e9; border-radius: 50px; position: relative; border-bottom: 6px solid #6a994e; margin-top: 10px; display: flex; align-items: center; overflow: visible; }}
         .decorations {{ position: absolute; width: 85%; left: 4%; display: flex; justify-content: space-between; font-size: 20px; bottom: 8px; z-index: 5; opacity: 0.6; }}
@@ -163,7 +163,7 @@ elif st.session_state.page == "timer":
             document.getElementById('check-title').style.display='block';
             document.getElementById('btn-group').style.display='flex'; 
             document.getElementById('video-wrap').style.display='none'; 
-            document.getElementById('main-view').style.display='block'; // 恢复显示进度条
+            document.getElementById('main-view').style.display='block'; 
         }}
 
         video.onended = function() {{ backToRead(); }};
@@ -177,8 +177,8 @@ elif st.session_state.page == "timer":
             
             if (total == 900) {{ 
                 isPaused = true; 
-                document.getElementById('main-view').style.display = 'none'; // 隐藏进度条
-                document.getElementById('interact-view').style.display = 'flex'; // 显示检查界面
+                document.getElementById('main-view').style.display = 'none'; 
+                document.getElementById('interact-view').style.display = 'flex'; 
                 var rem = 15;
                 autoInterval = setInterval(function() {{
                     rem--; 
@@ -200,19 +200,13 @@ elif st.session_state.page == "reward":
     with col1:
         if photos_list:
             try: 
-                # 这里手动指定了宽度为 350 像素，解决了之前的报错问题
                 st.image(random.choice(photos_list), width=350)
             except: 
                 pass
     with col2:
-        if music_list:
-            try: 
-                st.audio(random.choice(music_list))
-            except: 
-                pass
+        # 💡 已删掉 st.audio(random.choice(music_list)) 逻辑
         if videos_list:
             try: 
-                # 视频也统一指定了宽度，让排版更整齐
                 st.video(random.choice(videos_list), width=350)
             except: 
                 pass
