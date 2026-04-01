@@ -20,16 +20,14 @@ def get_files_from_dir(directory, exts):
     if not os.path.exists(directory): return []
     return [os.path.join(directory, f) for f in os.listdir(directory) if f.split('.')[-1].lower() in exts]
 
-# 加载基础素材（如果这些文件也很大，建议也压缩一下）
+# 加载基础素材
 bg_base64 = get_base64("assets/my_card.jpg")
 head_base64 = get_base64("assets/mimi_head.png")
 walk_base64 = get_base64("assets/mimi_walk.png")
-# 注意：如果你连背景音乐也不想要了，可以把下面这行和 HTML 里的 <audio> 标签删掉
-bgm_base64 = get_base64("assets/bg_music.mp3") 
+# 💡 彻底删除了 bgm_base64 的本地加载逻辑，给代码“减负”
 
 photos_list = get_files_from_dir("photos", ['jpg', 'png', 'jpeg'])
 videos_list = get_files_from_dir("videos", ['mp4', 'mov'])
-# 💡 已删掉 music_list 的扫描
 
 if "page" not in st.session_state: st.session_state.page = "landing"
 
@@ -106,7 +104,7 @@ elif st.session_state.page == "timer":
         #auto-msg {{ margin-top: 15px; font-size: 16px; color: #FFD700; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); padding-bottom: 10px; }}
     </style>
 
-    <audio id="bgm" autoplay loop><source src="data:audio/mp3;base64,{bgm_base64}" type="audio/mpeg"></audio>
+    <audio id="bgm" autoplay loop><source src="https://mysite-lyart-omega.vercel.app/assets/bg_music.mp3" type="audio/mpeg"></audio>
 
     <div class="container">
         <button id="duck-btn" onclick="toggleMute()">🦆</button>
@@ -204,13 +202,12 @@ elif st.session_state.page == "reward":
             except: 
                 pass
     with col2:
-        # 💡 已删掉 st.audio(random.choice(music_list)) 逻辑
         if videos_list:
             try: 
                 st.video(random.choice(videos_list), width=350)
             except: 
                 pass
-                
+            
     if st.button("再读一轮", use_container_width=True):
         st.session_state.page = "timer"; st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
